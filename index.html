@@ -11,7 +11,6 @@
     <style>
         :root {
             --hex-dark: #0f172a;
-            --hex-deep-blue: #1e293b;
             --hex-cyan: #22d3ee;
             --hex-blue-light: #7dd3fc;
             --hex-soft-gray: #94a3b8;
@@ -41,6 +40,12 @@
             text-align: center; position: relative;
         }
 
+        .version-tag {
+            position: absolute; top: 15px; right: 20px;
+            font-family: monospace; font-size: 0.7rem; color: var(--hex-cyan);
+            opacity: 0.8; letter-spacing: 1px;
+        }
+
         h1 { color: var(--hex-cyan); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 5px; }
         
         .status-bar { display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--hex-soft-gray); margin-bottom: 25px; font-family: monospace; }
@@ -68,12 +73,12 @@
         .feedback-panel {
             margin-top: 20px; padding: 20px; border-radius: 12px;
             display: none; text-align: left;
-            background: rgba(15, 23, 42, 0.8);
+            background: rgba(15, 23, 42, 0.9);
             border-left: 4px solid var(--hex-cyan);
             animation: fadeIn 0.4s ease;
         }
 
-        .step-by-step { margin-top: 10px; color: var(--hex-soft-gray); line-height: 1.6; }
+        .step-by-step { margin-top: 15px; color: #e2e8f0; line-height: 1.7; font-size: 1rem; }
 
         .btn-next {
             background: var(--hex-cyan); color: var(--hex-dark);
@@ -89,9 +94,14 @@
 <body>
 
 <div id="app-shell">
+    <div class="version-tag">VER. 2.2.0-STABLE</div>
+
     <div id="scr-start">
         <h1>LogiPower</h1>
-        <p style="color: var(--hex-soft-gray);">Neural Bridge v2.1 - Diego</p>
+        <p style="color: var(--hex-soft-gray);">Neural Bridge - Diego</p>
+        <div style="margin: 30px 0; font-size: 0.9rem; color: var(--hex-blue-light);">
+            Listo para convertir logaritmos y potencias.
+        </div>
         <button class="btn-next" onclick="initApp()">Iniciar Sincronización</button>
     </div>
 
@@ -106,16 +116,16 @@
         <div id="options" class="options-grid"></div>
 
         <div id="feedback" class="feedback-panel">
-            <div id="feed-msg" style="font-weight: bold; font-size: 1.1rem;"></div>
+            <div id="feed-msg" style="font-weight: bold; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;"></div>
             <div id="step-by-step" class="step-by-step"></div>
-            <button class="btn-next" onclick="nextQuestion()">Cargar Siguiente Nodo</button>
+            <button class="btn-next" onclick="nextQuestion()">Siguiente Reto →</button>
         </div>
     </div>
 
     <div id="scr-results" class="hidden">
         <h1>Análisis de Sesión</h1>
         <div id="final-stats" style="font-size: 1.4rem; margin: 30px 0;"></div>
-        <button class="btn-next" onclick="initApp()">Reiniciar Protocolo (20 Nuevos)</button>
+        <button class="btn-next" onclick="initApp()">Reiniciar Protocolo</button>
         <button class="btn-next" style="background: transparent; border: 1px solid var(--hex-soft-gray); color: white;" onclick="location.reload()">Finalizar</button>
     </div>
 </div>
@@ -132,30 +142,33 @@
             let exp = Math.floor(Math.random() * 3) + 1;
             let res = Math.pow(b, exp);
             
-            // Variedad con fracciones
-            if (Math.random() > 0.7) {
-                let val = res;
-                res = `\\frac{1}{${val}}`;
-                exp = -exp;
+            let resTex = res.toString();
+            let expVal = exp;
+
+            if (Math.random() > 0.6) { // Casos con fracciones/decimales
+                if (b === 10) {
+                    resTex = exp === 1 ? "0,1" : (exp === 2 ? "0,01" : "0,001");
+                } else {
+                    resTex = `\\frac{1}{${res}}`;
+                }
+                expVal = -exp;
             }
 
             if (isLog) {
                 qArr.push({
-                    type: 'log',
-                    q: `\\log_{${b}}(${res}) = ${exp}`,
-                    instr: "Convierte a Potencia:",
-                    ans: `${b}^{${exp}} = ${res}`,
-                    alts: [`${b}^{${exp}} = ${res}`, `${exp}^{${b}} = ${res}`, `${res}^{${exp}} = ${b}`],
-                    step: `Aplica la definición: $$\\log_{\\text{base}}(\\text{resultado}) = \\text{exponente}$$\n1. La base es $${b}$.\n2. El exponente es $${exp}$.\n3. El resultado es $${res}$.\n\nPor tanto: $${b}^{${exp}} = ${res}$`
+                    q: `\\log_{${b}}(${resTex}) = ${expVal}`,
+                    instr: "Convierte a POTENCIA:",
+                    ans: `${b}^{${expVal}} = ${resTex}`,
+                    alts: [`${b}^{${expVal}} = ${resTex}`, `${expVal}^{${b}} = ${resTex}`, `${resTex}^{${expVal}} = ${b}`],
+                    step: `Recuerda la definición: El logaritmo $\\log_b(a)=c$ es el exponente al que hay que elevar la base $b$ para obtener $a$.<br><br>1. Base: $${b}$<br>2. Exponente: $${expVal}$<br>3. Resultado: $${resTex}$`
                 });
             } else {
                 qArr.push({
-                    type: 'pow',
-                    q: `${b}^{${exp}} = ${res}`,
-                    instr: "Convierte a Logaritmo:",
-                    ans: `\\log_{${b}}(${res}) = ${exp}`,
-                    alts: [`\\log_{${b}}(${res}) = ${exp}`, `\\log_{${res}}(${b}) = ${exp}`, `\\log_{${exp}}(${res}) = ${b}`],
-                    step: `Aplica la definición: $$\\text{base}^{\\text{exponente}} = \\text{resultado}$$\n1. La base $${b}$ pasa a ser la base del logaritmo.\n2. El resultado $${res}$ es el argumento.\n3. El exponente $${exp}$ es el valor del logaritmo.\n\nPor tanto: $\\log_{${b}}(${res}) = ${exp}$`
+                    q: `${b}^{${expVal}} = ${resTex}`,
+                    instr: "Convierte a LOGARITMO:",
+                    ans: `\\log_{${b}}(${resTex}) = ${expVal}`,
+                    alts: [`\\log_{${b}}(${resTex}) = ${expVal}`, `\\log_{${resTex}}(${b}) = ${expVal}`, `\\log_{${expVal}}(${resTex}) = ${b}`],
+                    step: `Para pasar de potencia $b^c = a$ a logaritmo:<br><br>1. La base de la potencia ($${b}$) se mantiene como base del logaritmo.<br>2. El exponente ($${expVal}$) es el resultado del logaritmo.<br>3. El valor ($${resTex}$) es el argumento del logaritmo.`
                 });
             }
         }
@@ -194,10 +207,7 @@
             optsArea.appendChild(btn);
         });
 
-        // Renderizado inicial de KaTeX
-        renderMathInElement(document.getElementById('scr-game'), {
-            delimiters: [{left: "$$", right: "$$", display: true}, {left: "$", right: "$", display: false}]
-        });
+        triggerKaTeX(document.getElementById('scr-game'));
     }
 
     function check(selected, correct, btn) {
@@ -213,19 +223,26 @@
         if (selected === correct) {
             state.score++;
             btn.classList.add('correct');
-            msg.innerHTML = "✓ CONEXIÓN ESTABLE: ¡Excelente razonamiento!";
+            msg.innerHTML = "✓ NODO SINCRONIZADO";
             msg.style.color = "var(--hex-success)";
-            stepDiv.innerHTML = "";
+            stepDiv.innerHTML = "¡Excelente! Has aplicado correctamente la propiedad.";
         } else {
             btn.classList.add('wrong');
-            msg.innerHTML = "× INTERFERENCIA: Revisa el proceso.";
+            msg.innerHTML = "× INTERFERENCIA DETECTADA";
             msg.style.color = "var(--hex-error)";
             stepDiv.innerHTML = q.step;
-            // Renderizado específico para el paso a paso
-            renderMathInElement(stepDiv, {
-                delimiters: [{left: "$$", right: "$$", display: true}, {left: "$", right: "$", display: false}]
-            });
+            triggerKaTeX(stepDiv);
         }
+    }
+
+    function triggerKaTeX(element) {
+        renderMathInElement(element, {
+            delimiters: [
+                {left: "$$", right: "$$", display: true},
+                {left: "$", right: "$", display: false}
+            ],
+            throwOnError: false
+        });
     }
 
     function nextQuestion() {
@@ -234,7 +251,7 @@
         else {
             document.getElementById('scr-game').classList.add('hidden');
             document.getElementById('scr-results').classList.remove('hidden');
-            document.getElementById('final-stats').innerHTML = `Sincronización: ${state.score}/${state.total}<br>Efectividad: ${Math.round((state.score/state.total)*100)}%`;
+            document.getElementById('final-stats').innerHTML = `Efectividad: ${state.score}/${state.total}<br>${Math.round((state.score/state.total)*100)}% de precisión.`;
         }
     }
 </script>
