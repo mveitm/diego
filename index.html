@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LogiPower: Neural Bridge</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+
+    <style>
+        :root {
+            --hex-dark: #0f172a;
+            --hex-deep-blue: #1e293b;
+            --hex-cyan: #22d3ee;
+            --hex-blue-light: #7dd3fc;
+            --hex-soft-gray: #94a3b8;
+            --hex-success: #10b981;
+            --hex-error: #f43f5e;
+            --glass: rgba(30, 41, 59, 0.7);
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: var(--hex-dark);
+            background-image: radial-gradient(circle at top right, #1e3a8a, transparent),
+                              radial-gradient(circle at bottom left, #0891b2, transparent);
+            color: #f1f5f9;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        #app-shell {
+            background: var(--glass);
+            backdrop-filter: blur(12px);
+            width: 95%;
+            max-width: 600px;
+            padding: 40px;
+            border-radius: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            text-align: center;
+            position: relative;
+        }
+
+        .tech-border {
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 4px;
+            background: linear-gradient(90deg, transparent, var(--hex-cyan), transparent);
+            border-radius: 24px 24px 0 0;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--hex-cyan);
+            margin-bottom: 5px;
+            text-shadow: 0 0 10px rgba(34, 211, 238, 0.3);
+        }
+
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            color: var(--hex-soft-gray);
+            margin-bottom: 30px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .exercise-card {
+            background: rgba(15, 23, 42, 0.5);
+            padding: 30px;
+            border-radius: 16px;
+            margin: 20px 0;
+            border: 1px solid rgba(125, 211, 252, 0.1);
+            font-size: 1.8rem;
+        }
+
+        .options-grid {
+            display: grid;
+            gap: 12px;
+            margin-top: 25px;
+        }
+
+        .btn-opt {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            padding: 18px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-size: 1.1rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .btn-opt:hover {
+            background: rgba(34, 211, 238, 0.1);
+            border-color: var(--hex-cyan);
+            transform: scale(1.02);
+        }
+
+        .btn-opt.correct { background: var(--hex-success); border-color: #059669; }
+        .btn-opt.wrong { background: var(--hex-error); border-color: #e11d48; }
+
+        .feedback-panel {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 12px;
+            display: none;
+            text-align: left;
+            background: rgba(255, 255, 255, 0.03);
+            border-left: 4px solid var(--hex-cyan);
+        }
+
+        .btn-next {
+            background: var(--hex-cyan);
+            color: var(--hex-dark);
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-weight: 800;
+            cursor: pointer;
+            margin-top: 20px;
+            width: 100%;
+            text-transform: uppercase;
+        }
+
+        .hidden { display: none; }
+
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+    </style>
+</head>
+<body>
+
+<div id="app-shell">
+    <div class="tech-border"></div>
+    
+    <div id="scr-start">
+        <h1>LogiPower</h1>
+        <p style="color: var(--hex-soft-gray);">Neural Bridge v2.0 - Diego Edition</p>
+        <div style="margin: 40px 0;">
+            <p>Misión: Sincronizar 20 nodos de conversión logarítmica/potencial.</p>
+        </div>
+        <button class="btn-next" onclick="initApp()">Iniciar Secuencia</button>
+    </div>
+
+    <div id="scr-game" class="hidden">
+        <div class="status-bar">
+            <span>NODE_ID: <span id="node-idx">01</span>/20</span>
+            <span>INTEGRITY: <span id="node-score">0</span>%</span>
+        </div>
+        <p id="instr" style="font-size: 0.9rem; color: var(--hex-blue-light);"></p>
+        <div id="math-display" class="exercise-card"></div>
+        
+        <div id="options" class="options-grid"></div>
+
+        <div id="feedback" class="feedback-panel">
+            <div id="feed-msg" style="margin-bottom: 15px; font-weight: bold;"></div>
+            <div id="step-by-step" style="font-size: 0.95rem; color: var(--hex-soft-gray);"></div>
+            <button class="btn-next" onclick="nextQuestion()">Siguiente Nodo →</button>
+        </div>
+    </div>
+
+    <div id="scr-results" class="hidden">
+        <h1>Análisis Final</h1>
+        <div id="final-stats" style="font-size: 1.2rem; margin: 30px 0;"></div>
+        <div id="summary-list" style="max-height: 200px; overflow-y: auto; margin-bottom: 20px; text-align: left;"></div>
+        <button class="btn-next" onclick="initApp()">Reiniciar Set (20 nuevos)</button>
+        <button class="btn-next" style="background: transparent; border: 1px solid var(--hex-soft-gray); color: white;" onclick="location.reload()">Finalizar Enlace</button>
+    </div>
+</div>
+
+<script>
+    let state = {
+        idx: 0,
+        score: 0,
+        total: 20,
+        questions: [],
+        answered: false
+    };
+
+    function generateData() {
+        const questions = [];
+        for (let i = 0; i < 20; i++) {
+            const isLogToPow = Math.random() > 0.5;
+            const type = Math.floor(Math.random() * 3); // 0: Enteros, 1: Fracciones, 2: Negativos
+            
+            let b, c, a;
+
+            if (type === 0) {
+                b = [2, 3, 5, 10][Math.floor(Math.random() * 4)];
+                c = Math.floor(Math.random() * 3) + 1;
+                a = Math.pow(b, c);
+            } else if (type === 1) {
+                b = [2, 3, 4][Math.floor(Math.random() * 3)];
+                c = -1 * (Math.floor(Math.random() * 2) + 1);
+                a = `\\frac{1}{${Math.pow(b, Math.abs(c))}}`;
+            } else {
+                b = 10;
+                c = -2;
+                a = `0,01`;
+            }
+
+            const b_tex = b.toString();
+            const c_tex = c.toString();
+            const a_tex = a.toString();
+
+            if (isLogToPow) {
+                questions.push({
+                    q: `\\log_{${b_tex}}(${a_tex}) = ${c_tex}`,
+                    instr: "Convierte a POTENCIA:",
+                    ans: `${b_tex}^{${c_tex}} = ${a_tex}`,
+                    alts: [
+                        `${b_tex}^{${c_tex}} = ${a_tex}`,
+                        `${c_tex}^{${b_tex}} = ${a_tex}`,
+                        `${a_tex}^{${c_tex}} = ${b_tex}`
+                    ],
+                    step: `Recuerda la definición: El logaritmo $\\log_b(a)=c$ es el exponente al que hay que elevar la base $b$ para obtener $a$.<br><br>1. Base: $${b_tex}$<br>2. Exponente: $${c_tex}$<br>3. Resultado: $${a_tex}$`
+                });
+            } else {
+                questions.push({
+                    q: `${b_tex}^{${c_tex}} = ${a_tex}`,
+                    instr: "Convierte a LOGARITMO:",
+                    ans: `\\log_{${b_tex}}(${a_tex}) = ${c_tex}`,
+                    alts: [
+                        `\\log_{${b_tex}}(${a_tex}) = ${c_tex}`,
+                        `\\log_{${a_tex}}(${b_tex}) = ${c_tex}`,
+                        `\\log_{${c_tex}}(${a_tex}) = ${b_tex}`
+                    ],
+                    step: `En una potencia $b^c = a$, el exponente $c$ es el logaritmo.<br><br>1. La base de la potencia ($${b_tex}$) es la base del logaritmo.<br>2. El resultado ($${a_tex}$) es el argumento.<br>3. El exponente ($${c_tex}$) es el valor del logaritmo.`
+                });
+            }
+        }
+        return questions;
+    }
+
+    function initApp() {
+        state.idx = 0;
+        state.score = 0;
+        state.questions = generateData();
+        document.getElementById('scr-start').classList.add('hidden');
+        document.getElementById('scr-results').classList.add('hidden');
+        document.getElementById('scr-game').classList.remove('hidden');
+        renderQuestion();
+    }
+
+    function renderQuestion() {
+        state.answered = false;
+        const q = state.questions[state.idx];
+        document.getElementById('node-idx').innerText = (state.idx + 1).toString().padStart(2, '0');
+        document.getElementById('node-score').innerText = Math.round((state.score / (state.idx || 1)) * 100);
+        document.getElementById('instr').innerText = q.instr;
+        
+        const display = document.getElementById('math-display');
+        display.innerHTML = `$$ ${q.q} $$`;
+        
+        const opts = document.getElementById('options');
+        opts.innerHTML = '';
+        document.getElementById('feedback').style.display = 'none';
+
+        const mixedAlts = [...q.alts].sort(() => Math.random() - 0.5);
+        mixedAlts.forEach(alt => {
+            const btn = document.createElement('button');
+            btn.className = 'btn-opt';
+            btn.innerHTML = `$$ ${alt} $$`;
+            btn.onclick = () => checkAns(alt, q.ans, btn);
+            opts.appendChild(btn);
+        });
+
+        renderMathInElement(document.body, {
+            delimiters: [
+                {left: '$$', right: '$$', display: true},
+                {left: '$', right: '$', display: false}
+            ]
+        });
+    }
+
+    function checkAns(selected, correct, btn) {
+        if (state.answered) return;
+        state.answered = true;
+        const q = state.questions[state.idx];
+        const feed = document.getElementById('feedback');
+        const msg = document.getElementById('feed-msg');
+        const steps = document.getElementById('step-by-step');
+
+        feed.style.display = 'block';
+
+        if (selected === correct) {
+            state.score++;
+            btn.classList.add('correct');
+            msg.innerHTML = "✓ NODO SINCRONIZADO: ¡Excelente precisión, Diego!";
+            msg.style.color = "var(--hex-success)";
+            steps.innerHTML = "";
+        } else {
+            btn.classList.add('wrong');
+            msg.innerHTML = "× ERROR DE ENLACE: Reconfigurando parámetros...";
+            msg.style.color = "var(--hex-error)";
+            steps.innerHTML = q.step;
+            renderMathInElement(steps);
+        }
+    }
+
+    function nextQuestion() {
+        state.idx++;
+        if (state.idx < state.total) renderQuestion();
+        else showFinal();
+    }
+
+    function showFinal() {
+        document.getElementById('scr-game').classList.add('hidden');
+        document.getElementById('scr-results').classList.remove('hidden');
+        document.getElementById('final-stats').innerHTML = `
+            Nodos procesados: ${state.total}<br>
+            Sincronización exitosa: ${state.score}<br>
+            Eficiencia: ${Math.round((state.score/state.total)*100)}%
+        `;
+    }
+</script>
+
+</body>
+</html>
